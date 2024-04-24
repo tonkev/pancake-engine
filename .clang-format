@@ -1,0 +1,7 @@
+---
+BasedOnStyle: Chromium
+ColumnLimit: 100
+PointerAlignment: Left
+SortIncludes: true
+TabWidth: 2
+UseTab: Never
