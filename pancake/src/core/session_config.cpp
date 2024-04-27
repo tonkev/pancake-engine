@@ -6,43 +6,67 @@
 
 using namespace pancake;
 
-void SessionConfig::parse(int argc, const char* const* argv) {
-  CmdLineOptions options(argc, argv);
-
-  std::string_view option = options.consume();
-  while (!option.empty()) {
-    const CmdLineOptionRulePtr rule = getRule(option);
-
-    if (nullptr == rule) {
-      FEWI::warn() << "Unrecognised option : " << option;
-      break;
-    }
-
-    (*rule)(options, *this, option);
-
-    option = options.consume();
-  }
-}
-
-SessionConfig::CmdLineOptions::CmdLineOptions(int argc, const char* const* argv)
+CmdLineOptions::CmdLineOptions(int argc, const char* const* argv)
     : _argi(1), _argc(argc), _argv(argv) {}
 
-const char* SessionConfig::CmdLineOptions::consume() {
+const char* CmdLineOptions::consume() {
   if (_argi < _argc) {
     return _argv[_argi++];
   }
   return "";
 }
 
-void logSystemGraphsRule(SessionConfig::CmdLineOptions& options,
-                         SessionConfig& config,
-                         std::string_view option) {
-  config.log_system_graphs = true;
+SessionConfigRule::Creators& SessionConfigRule::getCreators() {
+  static Creators creators;
+  return creators;
 }
 
-void resourcePathsRule(SessionConfig::CmdLineOptions& options,
-                       SessionConfig& config,
-                       std::string_view option) {
+SessionConfig::SessionConfig() {
+  for (const auto& [id, creator] : SessionConfigRule::getCreators()) {
+    const auto it = _rules.emplace(id, creator());
+    if (it.second) {
+      for (const std::string& option : it.first->second->getOptions()) {
+        _option_rules.emplace(option, it.first->second);
+      }
+    }
+  }
+}
+
+SessionConfig::~SessionConfig() {
+  for (const auto& [_, rule] : _rules) {
+    delete rule;
+  }
+}
+
+void SessionConfig::parse(int argc, const char* const* argv) {
+  CmdLineOptions options(argc, argv);
+
+  std::string_view option = options.consume();
+  while (!option.empty()) {
+    if (auto rule_it = _option_rules.find(option); rule_it != _option_rules.end()) {
+      (*(rule_it->second))(options, option);
+    } else {
+      FEWI::warn() << "Unrecognised option : " << option;
+    }
+
+    option = options.consume();
+  }
+}
+
+void LogSystemGraphsRule::operator()(CmdLineOptions& options, std::string_view option) {
+  _value = true;
+}
+
+const std::set<std::string>& LogSystemGraphsRule::getOptions() const {
+  static const std::set<std::string> options{"--log-system-graphs"};
+  return options;
+}
+
+bool LogSystemGraphsRule::value() const {
+  return _value;
+}
+
+void ResourcePathsRule::operator()(CmdLineOptions& options, std::string_view option) {
   std::string paths = options.consume();
   if (paths.empty() || paths.starts_with("-")) {
     FEWI::warn() << "No value found for " << option;
@@ -51,17 +75,20 @@ void resourcePathsRule(SessionConfig::CmdLineOptions& options,
     size_t pos;
     do {
       pos = paths.find(';', prev_pos);
-      config.resource_paths.emplace_back(paths.substr(prev_pos, pos - prev_pos));
+      _resource_paths.emplace_back(paths.substr(prev_pos, pos - prev_pos));
       prev_pos = pos + 1;
     } while (std::string::npos != pos);
   }
 }
 
-const SessionConfig::CmdLineOptionRulePtr SessionConfig::getRule(std::string_view option) const {
-  static std::map<std::string, SessionConfig::CmdLineOptionRulePtr, std::less<>> rules{
-      {"--log-system-graphs", logSystemGraphsRule}, {"--resource-paths", resourcePathsRule}};
-  if (const auto it = rules.find(option); it != rules.end()) {
-    return it->second;
-  }
-  return nullptr;
+const std::set<std::string>& ResourcePathsRule::getOptions() const {
+  static const std::set<std::string> options{"--resource-paths"};
+  return options;
 }
+
+const std::vector<std::string>& ResourcePathsRule::resourcePaths() const {
+  return _resource_paths;
+}
+
+SessionConfigRule::StaticAdder<LogSystemGraphsRule> _log_system_graphs_rule_adder;
+SessionConfigRule::StaticAdder<ResourcePathsRule> _resource_paths_rule_adder;

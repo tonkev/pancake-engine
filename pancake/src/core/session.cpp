@@ -68,7 +68,8 @@ void Session::run() {
     node.system()->configure();
   }
 
-  if (_config.log_system_graphs) {
+  if (const auto* rule = _config.getRule<LogSystemGraphsRule>();
+      (rule != nullptr) && rule->value()) {
     {
       FEWI::MessageStream logic_msg = FEWI::info();
       _logic_system_graph.visualise(logic_msg);

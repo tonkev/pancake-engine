@@ -7,7 +7,9 @@ int main(int argc, const char* argv[]) {
   SessionConfig config;
   config.parse(argc, argv);
 
-  Resource::setLoadPaths(config.resource_paths);
+  if (const auto* rule = config.getRule<ResourcePathsRule>(); nullptr != rule) {
+    Resource::setLoadPaths(rule->resourcePaths());
+  }
 
   Session* session = Session::create(config);
   session->run();
