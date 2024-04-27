@@ -12,7 +12,7 @@
 
 using namespace pancake;
 
-GltfImporter::GltfImporter() {}
+GltfImporter::GltfImporter(const GUID& base_material) : _base_material(base_material) {}
 
 void GltfImporter::import(World& world, Resources& resources, const GltfResource& gltf) const {
   const auto& model = gltf.getModel();
@@ -73,6 +73,7 @@ bool GltfImporter::importNode(const EntityWrapper& entity,
       gltf_mesh.setId(node.mesh);
 
       entity.addComponent<MeshInstance>().mesh = gltf_mesh.guid();
+      entity.addComponent<MaterialInstance>().material = _base_material;
     }
   }
 

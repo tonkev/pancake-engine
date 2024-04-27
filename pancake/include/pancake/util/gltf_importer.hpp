@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs/world.hpp"
+#include "util/guid.hpp"
 
 namespace tinygltf {
 class Model;
@@ -11,7 +12,7 @@ class GltfResource;
 class Resources;
 class GltfImporter {
  public:
-  GltfImporter();
+  GltfImporter(const GUID& base_material);
   ~GltfImporter() = default;
 
   void import(World& world, Resources& resources, const GltfResource& gltf) const;
@@ -22,5 +23,7 @@ class GltfImporter {
                   const GltfResource& gltf,
                   const tinygltf::Model& model,
                   int node_idx) const;
+
+  GUID _base_material;
 };
 }  // namespace pancake
