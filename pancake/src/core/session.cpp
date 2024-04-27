@@ -117,6 +117,10 @@ void Session::run() {
   }
 }
 
+const SessionConfig& Session::config() {
+  return _config;
+}
+
 Input& Session::input() {
   return *_input;
 }

@@ -26,6 +26,7 @@ class Session {
 
   void run();
 
+  const SessionConfig& config();
   Input& input();
   Window& window();
   const Worlds& worlds();
