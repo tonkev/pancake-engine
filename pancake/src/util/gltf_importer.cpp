@@ -51,10 +51,10 @@ bool GltfImporter::importNode(const EntityWrapper& entity,
           Vec3f(static_cast<float>(node.translation[0]), static_cast<float>(node.translation[1]),
                 static_cast<float>(node.translation[2]));
     }
-    if (3 <= node.rotation.size()) {
-      modifier.localRotation() = QuaternionF(Mat4f::rotation(
-          Vec3f(static_cast<float>(node.rotation[0]), static_cast<float>(node.rotation[1]),
-                static_cast<float>(node.rotation[2]))));
+    if (4 <= node.rotation.size()) {
+      modifier.localRotation() =
+          QuaternionF(static_cast<float>(node.rotation[0]), static_cast<float>(node.rotation[1]),
+                      static_cast<float>(node.rotation[2]), static_cast<float>(node.rotation[3]));
     }
     if (3 <= node.scale.size()) {
       modifier.localScale() =
