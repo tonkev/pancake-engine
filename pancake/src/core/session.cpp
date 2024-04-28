@@ -23,8 +23,8 @@ namespace chrono = std::chrono;
 
 using namespace pancake;
 
-Session::Session(const SessionConfig& config)
-    : _config(config),
+Session::Session(SessionConfig&& config)
+    : _config(std::move(config)),
       _event_handler(EventHandler::create()),
       _input(Input::create()),
       _global_messages(true),

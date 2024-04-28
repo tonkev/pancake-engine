@@ -18,7 +18,7 @@ class Session {
  public:
   using Worlds = std::set<Ptr<World>>;
 
-  Session(const SessionConfig& config);
+  Session(SessionConfig&& config);
   virtual ~Session();
 
   void addWorld(const Ptr<World>& world);
@@ -39,14 +39,14 @@ class Session {
 
   MessageBoard& messageBoard(MessageId message_id, World* world = nullptr);
 
-  static Session* create(const SessionConfig& config = SessionConfig());
+  static Session* create(SessionConfig&& config);
 
  protected:
   virtual void registerComponents() const;
   virtual void configure() = 0;
 
  private:
-  SessionConfig _config;
+  SessionConfig&& _config;
   Resources _resources;
 
   EventHandler* _event_handler;

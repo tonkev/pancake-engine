@@ -58,6 +58,7 @@ concept SessionConfigRuleable = std::is_base_of_v<SessionConfigRule, T>;
 class SessionConfig {
  public:
   SessionConfig();
+  SessionConfig(const SessionConfig&) = delete;
   ~SessionConfig();
 
   void parse(int argc, const char* const* argv);

@@ -11,7 +11,7 @@ int main(int argc, const char* argv[]) {
     Resource::setLoadPaths(rule->resourcePaths());
   }
 
-  Session* session = Session::create(config);
+  Session* session = Session::create(std::move(config));
   session->run();
   delete session;
 
