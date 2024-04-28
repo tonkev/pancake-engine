@@ -58,6 +58,107 @@ int GltfMeshResource::getId() const {
   return _id;
 }
 
+template <typename T, T Vertex::*member>
+bool fillVertexMember(std::vector<Vertex>& vertices,
+                      int vertices_start,
+                      const std::string& attrib_name,
+                      const tinygltf::Primitive& primitive,
+                      const tinygltf::Model& model) {
+  const auto is_idx_in_range = [](int idx, int size) {
+    if ((idx < 0) || (size <= idx)) {
+      FEWI::error() << "Index out of range!";
+      return false;
+    }
+    return true;
+  };
+
+  int attrib = -1;
+  if (const auto it = primitive.attributes.find(attrib_name); it != primitive.attributes.end()) {
+    attrib = it->second;
+  }
+
+  if (!is_idx_in_range(attrib, model.accessors.size())) {
+    return false;
+  }
+
+  const auto& accessor = model.accessors[attrib];
+
+  if (!is_idx_in_range(accessor.bufferView, model.bufferViews.size())) {
+    return false;
+  }
+
+  if (accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+    FEWI::error() << "Vertex accessor component type is not float!";
+    return false;
+  }
+
+  size_t stride;
+  int components = 0;
+  switch (accessor.type) {
+    case TINYGLTF_TYPE_VEC2:
+      stride = sizeof(Vec2f);
+      components = 2;
+      break;
+    case TINYGLTF_TYPE_VEC3:
+      stride = sizeof(Vec3f);
+      components = 3;
+      break;
+    case TINYGLTF_TYPE_VEC4:
+      stride = sizeof(Vec4f);
+      components = 4;
+      break;
+    default:
+      FEWI::error() << "Unsupported vertex accessor type (" << accessor.type << ")!";
+      return false;
+  }
+
+  const auto& buffer_view = model.bufferViews[accessor.bufferView];
+
+  if (!is_idx_in_range(buffer_view.buffer, model.buffers.size())) {
+    return false;
+  }
+
+  const auto& buffer = model.buffers[buffer_view.buffer];
+
+  if ((vertices.size() - vertices_start) < accessor.count) {
+    vertices.resize(vertices_start + accessor.count);
+  }
+
+  if (0 < buffer_view.byteStride) {
+    stride = buffer_view.byteStride;
+  }
+
+  for (size_t i = 0; i < accessor.count; ++i) {
+    Vertex& vertex = vertices[vertices_start + i];
+    size_t idx = accessor.byteOffset + buffer_view.byteOffset + (i * stride);
+
+    if (!is_idx_in_range(idx, buffer.data.size())) {
+      return false;
+    }
+
+    if constexpr (2 <= T::HEIGHT) {
+      (vertex.*member).x() = *reinterpret_cast<const float*>(&(buffer.data[idx]));
+      (vertex.*member).y() = *reinterpret_cast<const float*>(&(buffer.data[idx + sizeof(float)]));
+    }
+
+    if constexpr (3 <= T::HEIGHT) {
+      if (3 <= components) {
+        (vertex.*member).z() =
+            *reinterpret_cast<const float*>(&(buffer.data[idx + (2 * sizeof(float))]));
+      }
+    }
+
+    if constexpr (4 <= T::HEIGHT) {
+      if (4 <= components) {
+        (vertex.*member).w() =
+            *reinterpret_cast<const float*>(&(buffer.data[idx + (3 * sizeof(float))]));
+      }
+    }
+  }
+
+  return true;
+}
+
 template <>
 void GltfMeshResource::resourceUpdated<GltfTag>(const GltfResource& res) {
   _vertices.clear();
@@ -80,123 +181,17 @@ void GltfMeshResource::resourceUpdated<GltfTag>(const GltfResource& res) {
 
     for (const auto& primitive : mesh.primitives) {
       if (primitive.mode != 4) {
-        FEWI::error() << "Unsupported primitive mode (" << primitive.mode << ") !";
+        FEWI::error() << "Unsupported primitive mode (" << primitive.mode << ")!";
         success = false;
         continue;
       }
-
-      int position_attrib = -1;
-      if (const auto it = primitive.attributes.find("POSITION"); it != primitive.attributes.end()) {
-        position_attrib = it->second;
-      }
-
-      if (!is_idx_in_range(position_attrib, model.accessors.size())) {
-        continue;
-      }
-
-      const auto& position_accessor = model.accessors[position_attrib];
-
-      if (!is_idx_in_range(position_accessor.bufferView, model.bufferViews.size())) {
-        continue;
-      }
-
-      if (position_accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
-        FEWI::error() << "Accessor component type is not float!";
-        success = false;
-        continue;
-      }
-
-      if (position_accessor.type != TINYGLTF_TYPE_VEC3) {
-        FEWI::error() << "Accessor type is not vec3!";
-        success = false;
-        continue;
-      }
-
-      const auto& position_buffer_view = model.bufferViews[position_accessor.bufferView];
-
-      if (!is_idx_in_range(position_buffer_view.buffer, model.buffers.size())) {
-        continue;
-      }
-
-      const auto& position_buffer = model.buffers[position_buffer_view.buffer];
 
       const int vertices_start = _vertices.size();
-      _vertices.resize(_vertices.size() + position_accessor.count);
 
-      const size_t position_stride =
-          (0 < position_buffer_view.byteStride) ? position_buffer_view.byteStride : sizeof(Vec3f);
-
-      for (size_t i = 0; i < position_accessor.count; ++i) {
-        Vertex& vertex = _vertices[vertices_start + i];
-        size_t idx =
-            position_accessor.byteOffset + position_buffer_view.byteOffset + (i * position_stride);
-
-        if (!is_idx_in_range(idx, position_buffer.data.size())) {
-          _vertices.resize(vertices_start);
-          continue;
-        }
-
-        vertex.position = Vec4f(*reinterpret_cast<const Vec3f*>(&(position_buffer.data[idx])), 0.f);
-      }
-
-      int normal_attrib = -1;
-      if (const auto it = primitive.attributes.find("NORMAL"); it != primitive.attributes.end()) {
-        normal_attrib = it->second;
-      }
-
-      if (!is_idx_in_range(normal_attrib, model.accessors.size())) {
-        continue;
-      }
-
-      const auto& normal_accessor = model.accessors[normal_attrib];
-
-      if (!is_idx_in_range(normal_accessor.bufferView, model.bufferViews.size())) {
-        continue;
-      }
-
-      if (normal_accessor.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
-        FEWI::error() << "Accessor component type is not float!";
-        success = false;
-        continue;
-      }
-
-      if (normal_accessor.type != TINYGLTF_TYPE_VEC3) {
-        FEWI::error() << "Accessor type is not vec3!";
-        success = false;
-        continue;
-      }
-
-      const auto& normal_buffer_view = model.bufferViews[normal_accessor.bufferView];
-
-      if (!is_idx_in_range(normal_buffer_view.buffer, model.buffers.size())) {
-        continue;
-      }
-
-      const auto& normal_buffer = model.buffers[normal_buffer_view.buffer];
-
-      if (position_accessor.count < normal_accessor.count) {
-        _vertices.resize(_vertices.size() + normal_accessor.count);
-      }
-
-      const size_t normal_stride =
-          (0 < normal_buffer_view.byteStride) ? normal_buffer_view.byteStride : sizeof(Vec3f);
-
-      for (size_t i = 0; i < normal_accessor.count; ++i) {
-        Vertex& vertex = _vertices[vertices_start + i];
-        size_t idx =
-            normal_accessor.byteOffset + normal_buffer_view.byteOffset + (i * normal_stride);
-
-        if (!is_idx_in_range(idx, normal_buffer.data.size())) {
-          _vertices.resize(vertices_start);
-          continue;
-        }
-
-        vertex.normal = Vec4f(*reinterpret_cast<const Vec3f*>(&(normal_buffer.data[idx])), 0.f);
-      }
-
-      if (!is_idx_in_range(primitive.indices, model.accessors.size())) {
-        continue;
-      }
+      fillVertexMember<Vec4f, &Vertex::position>(_vertices, vertices_start, "POSITION", primitive,
+                                                 model);
+      fillVertexMember<Vec4f, &Vertex::normal>(_vertices, vertices_start, "NORMAL", primitive,
+                                               model);
 
       const auto& indices_accessor = model.accessors[primitive.indices];
 
@@ -204,14 +199,25 @@ void GltfMeshResource::resourceUpdated<GltfTag>(const GltfResource& res) {
         continue;
       }
 
-      if (indices_accessor.componentType != TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-        FEWI::error() << "Accessor component type is not unsigned short!";
-        success = false;
-        continue;
+      size_t indices_stride;
+      switch (indices_accessor.componentType) {
+        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+          indices_stride = sizeof(unsigned char);
+          break;
+        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+          indices_stride = sizeof(unsigned short);
+          break;
+        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
+          indices_stride = sizeof(unsigned int);
+          break;
+        default:
+          FEWI::error() << "Unsupported indices accessor type (" << indices_accessor.type << ")!";
+          success = false;
+          continue;
       }
 
       if (indices_accessor.type != TINYGLTF_TYPE_SCALAR) {
-        FEWI::error() << "Accessor type is not scalar!";
+        FEWI::error() << "Indices accessor type is not scalar!";
         success = false;
         continue;
       }
@@ -227,11 +233,12 @@ void GltfMeshResource::resourceUpdated<GltfTag>(const GltfResource& res) {
       const int indices_start = _indices.size();
       _indices.resize(_indices.size() + indices_accessor.count);
 
-      const size_t indices_stride = (0 < indices_buffer_view.byteStride)
-                                        ? indices_buffer_view.byteStride
-                                        : sizeof(unsigned short);
+      if (0 < indices_buffer_view.byteStride) {
+        indices_stride = indices_buffer_view.byteStride;
+      }
 
       for (size_t i = 0; i < indices_accessor.count; ++i) {
+        unsigned int& index = _indices[indices_start + i];
         size_t idx =
             indices_accessor.byteOffset + indices_buffer_view.byteOffset + (i * indices_stride);
 
@@ -240,8 +247,19 @@ void GltfMeshResource::resourceUpdated<GltfTag>(const GltfResource& res) {
           continue;
         }
 
-        _indices[indices_start + i] =
-            *reinterpret_cast<const unsigned short*>(&(indices_buffer.data[idx]));
+        switch (indices_accessor.componentType) {
+          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+            index = *reinterpret_cast<const unsigned char*>(&(indices_buffer.data[idx]));
+            break;
+          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+            index = *reinterpret_cast<const unsigned short*>(&(indices_buffer.data[idx]));
+            break;
+          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
+            index = *reinterpret_cast<const unsigned int*>(&(indices_buffer.data[idx]));
+            break;
+          default:
+            break;
+        }
       }
     }
   } else {

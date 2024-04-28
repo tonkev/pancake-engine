@@ -557,6 +557,9 @@ class Matrix {
 
   T m[W][H];
 
+  static inline const int WIDTH = W;
+  static inline const int HEIGHT = H;
+
  private:
   static inline const TypeDesc& DESC
 #ifdef __linux__
