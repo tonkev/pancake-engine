@@ -260,6 +260,7 @@ void GltfMeshResource::resourceUpdated<GltfTag>(const GltfResource& res) {
           default:
             break;
         }
+        index += vertices_start;
       }
     }
   } else {
