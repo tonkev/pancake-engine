@@ -55,8 +55,8 @@ void ObjResource::_load() {
                            attrib.colors[3 * index.vertex_index + 2], 1.f);
 
       if (0 <= index.texcoord_index) {
-        vertex.uv = Vec2f(attrib.texcoords[2 * index.texcoord_index + 0],
-                          attrib.texcoords[2 * index.texcoord_index + 1]);
+        vertex.uv0 = Vec2f(attrib.texcoords[2 * index.texcoord_index + 0],
+                           attrib.texcoords[2 * index.texcoord_index + 1]);
       }
 
       indices.push_back(i);

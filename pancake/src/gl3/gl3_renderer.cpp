@@ -28,14 +28,14 @@ GL3Renderer::GL3Renderer(Resources& resources)
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   const Vertex vertices[] = {
-      {Vec4f(-0.5f, 0.5f, 0.0f, 0.0f), Vec4f(0.0f, 0.0f, 1.0f, 0.0f), Vec4f::ones(),
-       Vec2f(0.0f, 0.0f)},
-      {Vec4f(0.5f, 0.5f, 0.0f, 0.0f), Vec4f(0.0f, 0.0f, 1.0f, 0.0f), Vec4f::ones(),
-       Vec2f(1.0f, 0.0f)},
-      {Vec4f(-0.5f, -0.5f, 0.0f, 0.0f), Vec4f(0.0f, 0.0f, 1.0f, 0.0f), Vec4f::ones(),
-       Vec2f(0.0f, 1.0f)},
-      {Vec4f(0.5f, -0.5f, 0.0f, 0.0f), Vec4f(0.0f, 0.0f, 1.0f, 0.0f), Vec4f::ones(),
-       Vec2f(1.0f, 1.0f)},
+      {Vec4f(-0.5f, 0.5f, 0.0f, 0.0f), Vec4f(0.0f, 0.0f, 1.0f, 0.0f), Vec4f(1.0f, 0.0f, 0.0f, 0.0f),
+       Vec4f::ones(), Vec2f(0.0f, 0.0f), Vec2f(0.0f, 0.0f)},
+      {Vec4f(0.5f, 0.5f, 0.0f, 0.0f), Vec4f(0.0f, 0.0f, 1.0f, 0.0f), Vec4f(1.0f, 0.0f, 0.0f, 0.0f),
+       Vec4f::ones(), Vec2f(1.0f, 0.0f), Vec2f(1.0f, 0.0f)},
+      {Vec4f(-0.5f, -0.5f, 0.0f, 0.0f), Vec4f(0.0f, 0.0f, 1.0f, 0.0f),
+       Vec4f(1.0f, 0.0f, 0.0f, 0.0f), Vec4f::ones(), Vec2f(0.0f, 1.0f), Vec2f(0.0f, 1.0f)},
+      {Vec4f(0.5f, -0.5f, 0.0f, 0.0f), Vec4f(0.0f, 0.0f, 1.0f, 0.0f), Vec4f(1.0f, 0.0f, 0.0f, 0.0f),
+       Vec4f::ones(), Vec2f(1.0f, 1.0f), Vec2f(1.0f, 1.0f)},
   };
   const unsigned int indices[] = {0, 1, 2, 1, 2, 3};
   _meshes.emplace(GUID::null, createMesh(GUID::null, vertices, indices).release());

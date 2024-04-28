@@ -1,8 +1,8 @@
 #version 330 core
 layout(location = 0) in vec4 m_pos;
 layout(location = 1) in vec4 m_normal;
-layout(location = 3) in vec2 m_tex_coords;
-layout(location = 4) in mat4 mvp;
+layout(location = 4) in vec2 m_tex_coords;
+layout(location = 6) in mat4 mvp;
 
 out vec3 world_pos;
 out vec3 normal;

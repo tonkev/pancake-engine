@@ -190,8 +190,26 @@ void GltfMeshResource::resourceUpdated<GltfTag>(const GltfResource& res) {
 
       fillVertexMember<Vec4f, &Vertex::position>(_vertices, vertices_start, "POSITION", primitive,
                                                  model);
-      fillVertexMember<Vec4f, &Vertex::normal>(_vertices, vertices_start, "NORMAL", primitive,
-                                               model);
+      if (primitive.attributes.contains("NORMAL")) {
+        fillVertexMember<Vec4f, &Vertex::normal>(_vertices, vertices_start, "NORMAL", primitive,
+                                                 model);
+      }
+      if (primitive.attributes.contains("TANGENT")) {
+        fillVertexMember<Vec4f, &Vertex::tangent>(_vertices, vertices_start, "TANGENT", primitive,
+                                                  model);
+      }
+      if (primitive.attributes.contains("COLOR_0")) {
+        fillVertexMember<Vec4f, &Vertex::color>(_vertices, vertices_start, "COLOR_0", primitive,
+                                                model);
+      }
+      if (primitive.attributes.contains("TEXCOORD_0")) {
+        fillVertexMember<Vec2f, &Vertex::uv0>(_vertices, vertices_start, "TEXCOORD_0", primitive,
+                                              model);
+      }
+      if (primitive.attributes.contains("TEXCOORD_1")) {
+        fillVertexMember<Vec2f, &Vertex::uv1>(_vertices, vertices_start, "TEXCOORD_1", primitive,
+                                              model);
+      }
 
       const auto& indices_accessor = model.accessors[primitive.indices];
 

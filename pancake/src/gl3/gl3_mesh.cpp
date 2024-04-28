@@ -45,59 +45,69 @@ void GL3Mesh::update(std::span<const Vertex> vertices, std::span<const unsigned 
   glEnableVertexAttribArray(1);
   glEnableVertexAttribArray(2);
   glEnableVertexAttribArray(3);
+  glEnableVertexAttribArray(4);
+  glEnableVertexAttribArray(5);
 
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
   glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                         reinterpret_cast<void*>(sizeof(Vec4f)));
   glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                         reinterpret_cast<void*>(2 * sizeof(Vec4f)));
-  glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+  glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                         reinterpret_cast<void*>(3 * sizeof(Vec4f)));
+  glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                        reinterpret_cast<void*>(4 * sizeof(Vec4f)));
+  glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                        reinterpret_cast<void*>((4 * sizeof(Vec4f)) + sizeof(Vec2f)));
 
   glVertexAttribDivisor(0, 0);
   glVertexAttribDivisor(1, 0);
   glVertexAttribDivisor(2, 0);
   glVertexAttribDivisor(3, 0);
+  glVertexAttribDivisor(4, 0);
+  glVertexAttribDivisor(5, 0);
 
   glBindBuffer(GL_ARRAY_BUFFER, _instance_vbo);
 
-  glEnableVertexAttribArray(4);
-  glEnableVertexAttribArray(5);
-  glEnableVertexAttribArray(6);
-  glEnableVertexAttribArray(7);
-  glEnableVertexAttribArray(8);
-  glEnableVertexAttribArray(9);
-  glEnableVertexAttribArray(10);
-  glEnableVertexAttribArray(11);
-  glEnableVertexAttribArray(12);
+  unsigned int iis = 6;
 
-  glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData), nullptr);
-  glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
+  glEnableVertexAttribArray(iis);
+  glEnableVertexAttribArray(iis + 1);
+  glEnableVertexAttribArray(iis + 2);
+  glEnableVertexAttribArray(iis + 3);
+  glEnableVertexAttribArray(iis + 4);
+  glEnableVertexAttribArray(iis + 5);
+  glEnableVertexAttribArray(iis + 6);
+  glEnableVertexAttribArray(iis + 7);
+  glEnableVertexAttribArray(iis + 8);
+
+  glVertexAttribPointer(iis, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData), nullptr);
+  glVertexAttribPointer(iis + 1, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
                         reinterpret_cast<void*>(sizeof(Vec4f)));
-  glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
+  glVertexAttribPointer(iis + 2, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
                         reinterpret_cast<void*>(2 * sizeof(Vec4f)));
-  glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
+  glVertexAttribPointer(iis + 3, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
                         reinterpret_cast<void*>(3 * sizeof(Vec4f)));
-  glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
+  glVertexAttribPointer(iis + 4, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
                         reinterpret_cast<void*>(4 * sizeof(Vec4f)));
-  glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
+  glVertexAttribPointer(iis + 5, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
                         reinterpret_cast<void*>(5 * sizeof(Vec4f)));
-  glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
+  glVertexAttribPointer(iis + 6, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
                         reinterpret_cast<void*>(6 * sizeof(Vec4f)));
-  glVertexAttribPointer(11, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
+  glVertexAttribPointer(iis + 7, 4, GL_FLOAT, GL_FALSE, sizeof(CommonPerInstanceData),
                         reinterpret_cast<void*>(7 * sizeof(Vec4f)));
-  glVertexAttribIPointer(12, 4, GL_UNSIGNED_INT, sizeof(CommonPerInstanceData),
+  glVertexAttribIPointer(iis + 8, 4, GL_UNSIGNED_INT, sizeof(CommonPerInstanceData),
                          reinterpret_cast<void*>(8 * sizeof(Vec4f)));
 
-  glVertexAttribDivisor(4, 1);
-  glVertexAttribDivisor(5, 1);
-  glVertexAttribDivisor(6, 1);
-  glVertexAttribDivisor(7, 1);
-  glVertexAttribDivisor(8, 1);
-  glVertexAttribDivisor(9, 1);
-  glVertexAttribDivisor(10, 1);
-  glVertexAttribDivisor(11, 1);
-  glVertexAttribDivisor(12, 1);
+  glVertexAttribDivisor(iis, 1);
+  glVertexAttribDivisor(iis + 1, 1);
+  glVertexAttribDivisor(iis + 2, 1);
+  glVertexAttribDivisor(iis + 3, 1);
+  glVertexAttribDivisor(iis + 4, 1);
+  glVertexAttribDivisor(iis + 5, 1);
+  glVertexAttribDivisor(iis + 6, 1);
+  glVertexAttribDivisor(iis + 7, 1);
+  glVertexAttribDivisor(iis + 8, 1);
 
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
