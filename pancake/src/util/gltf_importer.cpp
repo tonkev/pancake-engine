@@ -2,7 +2,7 @@
 
 #include "components/3d.hpp"
 #include "ecs/world.hpp"
-#include "resources/gltf_mesh_resource.hpp"
+#include "resources/gltf_primitive_resource.hpp"
 #include "resources/gltf_resource.hpp"
 #include "resources/material_resource.hpp"
 #include "resources/resources.hpp"
@@ -66,6 +66,7 @@ bool GltfImporter::importNode(const EntityWrapper& entity,
   if ((0 <= node.mesh) && (static_cast<size_t>(node.mesh) < model.meshes.size())) {
     const auto& mesh = model.meshes[node.mesh];
     for (size_t p = 0; p < mesh.primitives.size(); ++p) {
+      const auto& primitive = mesh.primitives[p];
       if (const auto gltf_prim_opt = resources.getOrCreate<GltfPrimitiveResource>(
               std::string(gltf.path()) + ":mesh[" + std::to_string(node.mesh) + "]:primitive[" +
                   std::to_string(p) + "]",
@@ -83,6 +84,33 @@ bool GltfImporter::importNode(const EntityWrapper& entity,
         MeshInstance& mesh_inst = mesh_entity.addComponent<MeshInstance>();
         mesh_inst.mesh = gltf_prim.guid();
         mesh_entity.addComponent<MaterialInstance>().material = _base_material;
+
+        MaterialInstance& mat_inst = mesh_entity.addComponent<MaterialInstance>();
+        mat_inst.material = _base_material;
+
+        if ((0 <= primitive.material) &&
+            (static_cast<size_t>(primitive.material) < model.materials.size())) {
+          const auto base_mat_opt = resources.getOrCreate<MaterialResource>(_base_material);
+          const auto mat_opt = resources.getOrCreate<MaterialResource>(
+              std::string(gltf.path()) + ":material[" + std::to_string(primitive.material) + "]",
+              false);
+          if (base_mat_opt.has_value() && mat_opt.has_value()) {
+            MaterialResource& base_material_res = base_mat_opt.value();
+            MaterialResource& material_res = mat_opt.value();
+            const auto& material = model.materials[primitive.material];
+
+            material_res.setShader(base_material_res.getShader());
+            material_res.setStage(base_material_res.getStage());
+            material_res.setDepthTest(base_material_res.getDepthTest());
+            material_res.setLightPassInputName(base_material_res.getLightPassInputName());
+            material_res.setViewInputName(base_material_res.getViewInputName());
+            for (const ShaderInput& input : base_material_res.getInputs()) {
+              material_res.addInput(input);
+            }
+
+            mat_inst.material = material_res.guid();
+          }
+        }
       }
     }
   }
