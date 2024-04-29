@@ -10,7 +10,7 @@ class Model;
 
 namespace pancake {
 class GltfImporter;
-class GltfMeshResource;
+class GltfPrimitiveResource;
 class GltfResource : public Resource {
  public:
   GltfResource(std::string_view path, const GUID& guid);
@@ -27,7 +27,7 @@ class GltfResource : public Resource {
   const tinygltf::Model& getModel() const;
 
   friend GltfImporter;
-  friend GltfMeshResource;
+  friend GltfPrimitiveResource;
 
  private:
   std::unique_ptr<tinygltf::Model> _model;

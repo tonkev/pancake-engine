@@ -10,20 +10,22 @@
 namespace pancake {
 struct GltfTag {};
 
-class GltfMeshResource
+class GltfPrimitiveResource
     : public JSONResource,
       public MeshResourceInterface,
-      public ResourceUser<GltfMeshResource,
-                          ResourceUse<GltfMeshResource, pancake::GltfResource, GltfTag>> {
+      public ResourceUser<GltfPrimitiveResource,
+                          ResourceUse<GltfPrimitiveResource, pancake::GltfResource, GltfTag>> {
  public:
-  GltfMeshResource(std::string_view path, const GUID& guid);
-  virtual ~GltfMeshResource() = default;
+  GltfPrimitiveResource(std::string_view path, const GUID& guid);
+  virtual ~GltfPrimitiveResource() = default;
 
   void setGltf(const GUID& gltf);
-  void setId(int id);
+  void setMesh(int mesh);
+  void setPrimitive(int primitive);
 
   const GUID& getGltf() const;
-  int getId() const;
+  int getMesh() const;
+  int getPrimitive() const;
 
   template <typename T>
   void resourceUpdated(const GltfResource& res);
@@ -45,7 +47,8 @@ class GltfMeshResource
   virtual void _save() override;
 
  private:
-  int _id;
+  int _mesh;
+  int _primitive;
 
   std::vector<Vertex> _vertices;
   std::vector<unsigned int> _indices;

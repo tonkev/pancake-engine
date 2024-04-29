@@ -61,7 +61,7 @@ add_library(pancake OBJECT
   src/input/input_axis.cpp
   src/messages/ui.cpp
   src/resources/gl3_shader_resource.cpp
-  src/resources/gltf_mesh_resource.cpp
+  src/resources/gltf_primitive_resource.cpp
   src/resources/gltf_resource.cpp
   src/resources/image_resource.cpp
   src/resources/json_resource.cpp

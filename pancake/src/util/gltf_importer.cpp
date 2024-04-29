@@ -63,17 +63,27 @@ bool GltfImporter::importNode(const EntityWrapper& entity,
     }
   }
 
-  if (0 <= node.mesh) {
-    if (const auto gltf_mesh_opt = resources.getOrCreate<GltfMeshResource>(
-            std::string(gltf.path()) + ":mesh[" + std::to_string(node.mesh) + "]", false);
-        gltf_mesh_opt.has_value()) {
-      GltfMeshResource& gltf_mesh = gltf_mesh_opt.value().get();
+  if ((0 <= node.mesh) && (static_cast<size_t>(node.mesh) < model.meshes.size())) {
+    const auto& mesh = model.meshes[node.mesh];
+    for (size_t p = 0; p < mesh.primitives.size(); ++p) {
+      if (const auto gltf_prim_opt = resources.getOrCreate<GltfPrimitiveResource>(
+              std::string(gltf.path()) + ":mesh[" + std::to_string(node.mesh) + "]:primitive[" +
+                  std::to_string(p) + "]",
+              false);
+          gltf_prim_opt.has_value()) {
+        GltfPrimitiveResource& gltf_prim = gltf_prim_opt.value().get();
 
-      gltf_mesh.setGltf(gltf.guid());
-      gltf_mesh.setId(node.mesh);
+        EntityWrapper mesh_entity = entity.createChild();
+        mesh_entity.addComponent<Transform3D>();
 
-      entity.addComponent<MeshInstance>().mesh = gltf_mesh.guid();
-      entity.addComponent<MaterialInstance>().material = _base_material;
+        gltf_prim.setGltf(gltf.guid());
+        gltf_prim.setMesh(node.mesh);
+        gltf_prim.setPrimitive(p);
+
+        MeshInstance& mesh_inst = mesh_entity.addComponent<MeshInstance>();
+        mesh_inst.mesh = gltf_prim.guid();
+        mesh_entity.addComponent<MaterialInstance>().material = _base_material;
+      }
     }
   }
 
