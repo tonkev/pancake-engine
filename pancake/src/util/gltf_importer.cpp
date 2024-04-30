@@ -4,8 +4,10 @@
 #include "ecs/world.hpp"
 #include "resources/gltf_primitive_resource.hpp"
 #include "resources/gltf_resource.hpp"
+#include "resources/image_resource.hpp"
 #include "resources/material_resource.hpp"
 #include "resources/resources.hpp"
+#include "resources/texture_props_resource.hpp"
 #include "util/fewi.hpp"
 
 #include "tinygltf/tiny_gltf.h"
@@ -106,6 +108,33 @@ bool GltfImporter::importNode(const EntityWrapper& entity,
             material_res.setViewInputName(base_material_res.getViewInputName());
             for (const ShaderInput& input : base_material_res.getInputs()) {
               material_res.addInput(input);
+            }
+
+            const auto& texture_info = material.pbrMetallicRoughness.baseColorTexture;
+            if ((0 <= texture_info.index) &&
+                (static_cast<size_t>(texture_info.index) < model.textures.size())) {
+              if (const auto& texture_props_opt = resources.getOrCreate<TexturePropsResource>(
+                      std::string(gltf.path()) + ":textures[" + std::to_string(texture_info.index) +
+                          "]",
+                      false);
+                  texture_props_opt.has_value()) {
+                TexturePropsResource& texture_props = texture_props_opt.value();
+
+                const auto& texture = model.textures[texture_info.index];
+                if ((0 <= texture.source) &&
+                    (static_cast<size_t>(texture.source) < model.images.size())) {
+                  if (const auto& image_opt = resources.getOrCreate<ImageResource>(
+                          std::string(gltf.dir()) + "/" + model.images[texture.source].uri);
+                      image_opt.has_value()) {
+                    const ImageResource& image = image_opt.value();
+                    texture_props.setSourceImage(image.guid());
+                    texture_props.setSize(image.size());
+                  }
+                }
+
+                material_res.addInput(
+                    ShaderInput("base_color_texture", TextureRef(texture_props.guid())));
+              }
             }
 
             mat_inst.material = material_res.guid();

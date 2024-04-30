@@ -145,8 +145,8 @@ std::string Resource::resolvePath(std::string_view path) {
   std::string standard_path(path);
   standardisePath(standard_path);
 
-  if (fs::exists(path)) {
-    full_path = path;
+  if (fs::exists(standard_path)) {
+    full_path = standard_path;
   } else {
     for (const std::string& load_path : _LOAD_PATHS) {
       std::string p = load_path + standard_path;

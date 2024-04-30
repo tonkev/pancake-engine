@@ -55,9 +55,9 @@ void GL3Mesh::update(std::span<const Vertex> vertices, std::span<const unsigned 
                         reinterpret_cast<void*>(2 * sizeof(Vec4f)));
   glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                         reinterpret_cast<void*>(3 * sizeof(Vec4f)));
-  glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                        reinterpret_cast<void*>(4 * sizeof(Vec4f)));
   glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                        reinterpret_cast<void*>(4 * sizeof(Vec4f)));
+  glVertexAttribPointer(5, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                         reinterpret_cast<void*>((4 * sizeof(Vec4f)) + sizeof(Vec2f)));
 
   glVertexAttribDivisor(0, 0);

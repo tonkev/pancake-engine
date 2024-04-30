@@ -11,7 +11,7 @@ using ColliderMask = Bitmask<1>;
 
 PSTRUCT(TextureRef)
 TextureRef() = default;
-TextureRef(const GUID& texture, int tile);
+TextureRef(const GUID& texture, int tile = -1);
 
 PSTRUCT_MEMBER_INITIALISED(GUID, texture, GUID::null)
 PSTRUCT_MEMBER_INITIALISED(int, tile, -1);
