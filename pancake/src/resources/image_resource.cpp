@@ -39,7 +39,7 @@ void ImageResource::_load() {
     _data_deleter(_data);
     _data = nullptr;
   }
-  _data = stbi_load(_full_path.data(), &_size.x(), &_size.y(), &_channels, 4);
+  _data = stbi_load(_full_path.data(), &_size.x(), &_size.y(), &_channels, 0);
   if (nullptr == _data) {
     FEWI::error("Failed to load image " + _full_path + " ! : " + stbi_failure_reason());
   }
