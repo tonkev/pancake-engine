@@ -17,9 +17,19 @@
 using namespace pancake;
 
 GL3Renderer::GL3Renderer(Resources& resources)
-    : _image_atlas(std::make_shared<ImageAtlas>("atlas.png", 1024, 1024, 4)),
-      _atlas_texture_props("", GUID::null) {
-  _atlas_texture_props.setSize(Vec2i(1024, 1024));
+    : _image_atlas(nullptr), _atlas_texture_props("", GUID::null) {
+  Vec2i atlas_size(16384 * 2);
+  int out_width = 0;
+  do {
+    atlas_size = atlas_size / 2;
+    glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA32F, atlas_size.x(), atlas_size.y(), 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, nullptr);
+    glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &out_width);
+  } while (out_width == 0);
+
+  _image_atlas = std::make_shared<ImageAtlas>("atlas.png", atlas_size.x(), atlas_size.y(), 4);
+
+  _atlas_texture_props.setSize(atlas_size);
   _atlas_texture = std::make_shared<GL3Texture>(_atlas_texture_props);
 
   glGenBuffers(1, &_instance_vbo);
