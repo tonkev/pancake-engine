@@ -85,7 +85,6 @@ bool GltfImporter::importNode(const EntityWrapper& entity,
 
         MeshInstance& mesh_inst = mesh_entity.addComponent<MeshInstance>();
         mesh_inst.mesh = gltf_prim.guid();
-        mesh_entity.addComponent<MaterialInstance>().material = _base_material;
 
         MaterialInstance& mat_inst = mesh_entity.addComponent<MaterialInstance>();
         mat_inst.material = _base_material;
