@@ -71,10 +71,13 @@ void ResourcePathsRule::operator()(CmdLineOptions& options, std::string_view opt
   if (paths.empty() || paths.starts_with("-")) {
     FEWI::warn() << "No value found for " << option;
   } else {
+    char separator = paths.front();
+    paths = paths.substr(1);
+
     size_t prev_pos = 0;
     size_t pos;
     do {
-      pos = paths.find(';', prev_pos);
+      pos = paths.find(separator, prev_pos);
       _resource_paths.emplace_back(paths.substr(prev_pos, pos - prev_pos));
       prev_pos = pos + 1;
     } while (std::string::npos != pos);
