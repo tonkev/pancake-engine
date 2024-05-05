@@ -87,12 +87,15 @@ void MaterialResource::setViewInputName(std::string_view input_name) {
 }
 
 void MaterialResource::addInput(const ShaderInput& input) {
+  removeInput(input.getName());
   _inputs.emplace(input);
+  updated();
 }
 
 void MaterialResource::removeInput(std::string_view input_name) {
   std::erase_if(_inputs,
                 [&input_name](const ShaderInput& input) { return input.getName() == input_name; });
+  updated();
 }
 
 const GUID& MaterialResource::getShader() const {

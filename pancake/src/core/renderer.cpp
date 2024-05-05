@@ -329,6 +329,10 @@ void Renderer::preRender(Session& session, Resources& resources) {
   }
   _shader_update_queue.clear();
 
+  for (auto& [guid, material] : _materials) {
+    material.checkAndApplyResourceUpdates(resources);
+  }
+
   FramebufferInfo render_info;
   render_info.render_targets[0].clear_colour = Vec4f::ones();
   render_info.size = _render_size;
