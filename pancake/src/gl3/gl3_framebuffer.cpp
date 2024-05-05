@@ -31,12 +31,12 @@ void GL3Framebuffer::update() {
 
   const Vec2i& size = getSize();
 
-  TexturePropsResource tex_props("", guid());
-  tex_props.setSize(size);
   _render_targets.resize(_num_targets);
   for (char i = 0; i < _num_targets; ++i) {
     Ptr<GL3Texture>& render_target = _render_targets[i];
 
+    TexturePropsResource tex_props("", GUID::gen());
+    tex_props.setSize(size);
     tex_props.setFormat(_render_target_infos[i].format);
 
     if (nullptr == render_target) {
