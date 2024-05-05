@@ -50,7 +50,17 @@ std::optional<std::reference_wrapper<const ImageAtlas::Rect>> ImageAtlas::getRec
   return rect_opt;
 }
 
+const std::unordered_map<GUID, ImageAtlas::Rect>& ImageAtlas::getRects() const {
+  return _packed_rects;
+}
+
+const std::unordered_set<GUID>& ImageAtlas::getRejectedImages() const {
+  return _rejected_images;
+}
+
 void ImageAtlas::update(Resources& resources) {
+  _rejected_images.clear();
+
   for (const auto& [guid, rect] : _packed_rects) {
     std::optional<std::reference_wrapper<ImageResource>> img_res =
         resources.getOrCreate<ImageResource>(guid);
@@ -95,15 +105,20 @@ void ImageAtlas::update(Resources& resources) {
     const GUID& guid = guids[s_rect.id];
     Rect& rect = _packed_rects[guid];
 
-    if (_pending_images.contains(guid)) {
-      std::optional<std::reference_wrapper<ImageResource>> img_res =
-          resources.getOrCreate<ImageResource>(guid);
-      if (img_res.has_value()) {
-        _underlying_image.blit(img_res.value(), s_rect.x, s_rect.y);
+    if (s_rect.was_packed) {
+      if (_pending_images.contains(guid)) {
+        std::optional<std::reference_wrapper<ImageResource>> img_res =
+            resources.getOrCreate<ImageResource>(guid);
+        if (img_res.has_value()) {
+          _underlying_image.blit(img_res.value(), s_rect.x, s_rect.y);
+        }
+      } else {
+        _underlying_image.blit(old, s_rect.x, s_rect.y, rect.position.x(), rect.position.y(),
+                               rect.size.x(), rect.size.y());
       }
     } else {
-      _underlying_image.blit(old, s_rect.x, s_rect.y, rect.position.x(), rect.position.y(),
-                             rect.size.x(), rect.size.y());
+      _packed_rects.erase(guid);
+      _rejected_images.insert(guid);
     }
 
     rect.position.x() = s_rect.x;

@@ -26,6 +26,8 @@ class ImageAtlas {
   void add(const GUID& image_guid);
   void add(const ImageResource& image);
   std::optional<std::reference_wrapper<const ImageAtlas::Rect>> getRect(const GUID& guid) const;
+  const std::unordered_map<GUID, Rect>& getRects() const;
+  const std::unordered_set<GUID>& getRejectedImages() const;
 
   void update(Resources& resources);
 
@@ -36,6 +38,7 @@ class ImageAtlas {
  private:
   ImageResource _underlying_image;
   std::unordered_set<GUID> _pending_images;
+  std::unordered_set<GUID> _rejected_images;
   std::unordered_map<GUID, Rect> _packed_rects;
 };
 }  // namespace pancake

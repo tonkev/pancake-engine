@@ -15,6 +15,10 @@ class AtlassedTexture : public Texture {
 
   Texture& atlas() const;
 
+  void setAtlas(Ptr<Texture> texture, Ptr<ImageAtlas> atlas);
+
+  virtual const GUID& bindingGuid() const override;
+
  protected:
   AtlassedTexture(Ptr<Texture> texture,
                   Ptr<ImageAtlas> atlas,

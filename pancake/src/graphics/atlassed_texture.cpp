@@ -34,3 +34,17 @@ void AtlassedTexture::bind(int slot) const {
 const Vec4f& AtlassedTexture::transform() const {
   return _transform;
 }
+
+Texture& AtlassedTexture::atlas() const {
+  return *_texture;
+}
+
+void AtlassedTexture::setAtlas(Ptr<Texture> texture, Ptr<ImageAtlas> atlas) {
+  _texture = texture;
+  _atlas = atlas;
+  atlas->add(_image_guid);
+}
+
+const GUID& AtlassedTexture::bindingGuid() const {
+  return _texture->bindingGuid();
+}

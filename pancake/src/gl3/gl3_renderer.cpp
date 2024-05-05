@@ -17,21 +17,7 @@
 using namespace pancake;
 
 GL3Renderer::GL3Renderer(Resources& resources)
-    : _image_atlas(nullptr), _atlas_texture_props("", GUID::null) {
-  Vec2i atlas_size(16384 * 2);
-  int out_width = 0;
-  do {
-    atlas_size = atlas_size / 2;
-    glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA32F, atlas_size.x(), atlas_size.y(), 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, nullptr);
-    glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &out_width);
-  } while (out_width == 0);
-
-  _image_atlas = std::make_shared<ImageAtlas>("atlas.png", atlas_size.x(), atlas_size.y(), 4);
-
-  _atlas_texture_props.setSize(atlas_size);
-  _atlas_texture = std::make_shared<GL3Texture>(_atlas_texture_props);
-
+    : _next_texture_slot(0), _texture_slots(16, GUID::null) {
   glGenBuffers(1, &_instance_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, _instance_vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(Mat4f) * 100, nullptr, GL_DYNAMIC_DRAW);
@@ -99,8 +85,29 @@ GL3Renderer::GL3Renderer(Resources& resources)
 }
 
 GL3Renderer::~GL3Renderer() {
-  _image_atlas->image().save();
+  //_image_atlas->image().save();
   glDeleteBuffers(1, &_instance_vbo);
+}
+
+GL3Renderer::AtlasInfo GL3Renderer::createAtlas() {
+  AtlasInfo atlas;
+
+  Vec2i atlas_size(16384 * 2);
+  int out_width = 0;
+  do {
+    atlas_size = atlas_size / 2;
+    glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA32F, atlas_size.x(), atlas_size.y(), 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, nullptr);
+    glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &out_width);
+  } while (out_width == 0);
+
+  TexturePropsResource tex_props("", GUID::gen());
+  tex_props.setSize(atlas_size);
+
+  atlas.image = std::make_shared<ImageAtlas>("atlas.png", atlas_size.x(), atlas_size.y(), 4);
+  atlas.texture = std::make_shared<GL3Texture>(tex_props);
+
+  return atlas;
 }
 
 std::unique_ptr<Mesh> GL3Renderer::createMesh(const GUID& guid) {
@@ -126,8 +133,21 @@ void GL3Renderer::useDrawOptions(const DrawOptions& options) {
 }
 
 int GL3Renderer::bindTexture(const Texture& texture) {
-  texture.bind(1);
-  return 1;
+  const GUID binding_guid = texture.bindingGuid();
+  for (int i = 0; i < _texture_slots.size(); ++i) {
+    if (_texture_slots[i] == binding_guid) {
+      texture.bind(i);
+      return i;
+    }
+  }
+
+  int slot = _next_texture_slot;
+  _texture_slots[slot] = binding_guid;
+  texture.bind(slot);
+
+  _next_texture_slot = (_next_texture_slot + 1) % _texture_slots.size();
+
+  return slot;
 }
 
 Ptr<Mesh> GL3Renderer::getUnitSquare() const {
@@ -143,7 +163,12 @@ Ptr<Shader> GL3Renderer::getDefaultShader() const {
 }
 
 Texture* GL3Renderer::createTexture(const TexturePropsResource& texture_props) {
-  return new AtlassedTexture(_atlas_texture, _image_atlas, texture_props);
+  if (_atlas_infos.empty()) {
+    _atlas_infos.push_back(createAtlas());
+  }
+
+  AtlasInfo& last_atlas = _atlas_infos.back();
+  return new AtlassedTexture(last_atlas.texture, last_atlas.image, texture_props);
 }
 
 std::unique_ptr<Framebuffer> GL3Renderer::createFramebuffer(const GUID& guid,
@@ -192,14 +217,30 @@ void GL3Renderer::blit(Framebuffer& dst, const Framebuffer& src) {
 void GL3Renderer::preRender(Session& session, Resources& resources) {
   Renderer::preRender(session, resources);
 
-  ImageAtlas& atlas = *_image_atlas;
-  const uint64_t prev_gen = atlas.gen();
-  atlas.update(resources);
-  if (prev_gen != atlas.gen()) {
-    _atlas_texture->update(atlas.image());
-    for (auto& [guid, tex] : _textures) {
-      tex->update(resources);
+  for (AtlasInfo& atlas : _atlas_infos) {
+    const uint64_t prev_gen = atlas.image->gen();
+    atlas.image->update(resources);
+    if (prev_gen != atlas.image->gen()) {
+      atlas.texture->update(atlas.image->image());
+
+      const auto& rejected_images = atlas.image->getRejectedImages();
+      if (!rejected_images.empty()) {
+        AtlasInfo atlas = createAtlas();
+        _atlas_infos.push_back(atlas);
+
+        for (auto& [_, tex] : _textures) {
+          for (const GUID& guid : rejected_images) {
+            if (tex->imageGuid() == guid) {
+              static_cast<AtlassedTexture&>(*tex).setAtlas(atlas.texture, atlas.image);
+            }
+          }
+        }
+      }
     }
+  }
+
+  for (auto& [_, tex] : _textures) {
+    tex->update(resources);
   }
 
   for (const auto& [guid, shader_ptr] : _shaders) {

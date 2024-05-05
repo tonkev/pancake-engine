@@ -21,6 +21,8 @@ class Texture {
   virtual const Vec4f& transform() const;
 
   const GUID& guid() const;
+  const GUID& imageGuid() const;
+  virtual const GUID& bindingGuid() const;
 
  protected:
   Texture(const TexturePropsResource& texture_props);

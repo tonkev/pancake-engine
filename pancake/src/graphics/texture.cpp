@@ -55,3 +55,11 @@ void Texture::scheduleImageUpdate() {
 const GUID& Texture::guid() const {
   return _guid;
 }
+
+const GUID& Texture::imageGuid() const {
+  return _image_guid;
+}
+
+const GUID& Texture::bindingGuid() const {
+  return _guid;
+}

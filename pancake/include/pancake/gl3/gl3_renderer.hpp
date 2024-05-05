@@ -52,9 +52,17 @@ class GL3Renderer : public Renderer {
   virtual void blit(Framebuffer& dst, const Framebuffer& src) override;
 
  private:
+  struct AtlasInfo {
+    Ptr<ImageAtlas> image;
+    Ptr<GL3Texture> texture;
+  };
+
+  AtlasInfo createAtlas();
+
   unsigned int _instance_vbo;
-  Ptr<ImageAtlas> _image_atlas;
-  TexturePropsResource _atlas_texture_props;
-  Ptr<GL3Texture> _atlas_texture;
+  std::vector<AtlasInfo> _atlas_infos;
+
+  int _next_texture_slot;
+  std::vector<GUID> _texture_slots;
 };
 }  // namespace pancake
