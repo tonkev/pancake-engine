@@ -92,7 +92,7 @@ GL3Renderer::~GL3Renderer() {
 GL3Renderer::AtlasInfo GL3Renderer::createAtlas() {
   AtlasInfo atlas;
 
-  Vec2i atlas_size(16384 * 2);
+  Vec2i atlas_size(4096 * 2);
   int out_width = 0;
   do {
     atlas_size = atlas_size / 2;
