@@ -16,6 +16,8 @@
 
 using namespace pancake;
 
+GL3Renderer::AtlasInfo::AtlasInfo() : props(new TexturePropsResource("", GUID::null)) {}
+
 GL3Renderer::GL3Renderer(Resources& resources)
     : _next_texture_slot(0), _texture_slots(16, GUID::null) {
   glGenBuffers(1, &_instance_vbo);
@@ -89,7 +91,7 @@ GL3Renderer::~GL3Renderer() {
   glDeleteBuffers(1, &_instance_vbo);
 }
 
-GL3Renderer::AtlasInfo GL3Renderer::createAtlas() {
+GL3Renderer::AtlasInfo GL3Renderer::createAtlas(BufferFormat format, TextureFilter filter) {
   AtlasInfo atlas;
 
   Vec2i atlas_size(4096 * 2);
@@ -101,11 +103,12 @@ GL3Renderer::AtlasInfo GL3Renderer::createAtlas() {
     glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &out_width);
   } while (out_width == 0);
 
-  TexturePropsResource tex_props("", GUID::gen());
-  tex_props.setSize(atlas_size);
+  atlas.props->setSize(atlas_size);
+  atlas.props->setFormat(format);
+  atlas.props->setFilter(filter);
 
   atlas.image = std::make_shared<ImageAtlas>("atlas.png", atlas_size.x(), atlas_size.y(), 4);
-  atlas.texture = std::make_shared<GL3Texture>(tex_props);
+  atlas.texture = std::make_shared<GL3Texture>(*atlas.props);
 
   return atlas;
 }
@@ -134,7 +137,7 @@ void GL3Renderer::useDrawOptions(const DrawOptions& options) {
 
 int GL3Renderer::bindTexture(const Texture& texture) {
   const GUID binding_guid = texture.bindingGuid();
-  for (int i = 0; i < _texture_slots.size(); ++i) {
+  for (unsigned int i = 0; i < _texture_slots.size(); ++i) {
     if (_texture_slots[i] == binding_guid) {
       texture.bind(i);
       return i;
@@ -163,12 +166,22 @@ Ptr<Shader> GL3Renderer::getDefaultShader() const {
 }
 
 Texture* GL3Renderer::createTexture(const TexturePropsResource& texture_props) {
-  if (_atlas_infos.empty()) {
-    _atlas_infos.push_back(createAtlas());
+  const BufferFormat format = texture_props.getFormat();
+  const TextureFilter filter = texture_props.getFilter();
+
+  AtlasInfo* atlas = nullptr;
+  for (auto it = _atlas_infos.rbegin(); it != _atlas_infos.rend(); ++it) {
+    if ((format == it->props->getFormat()) && (filter == it->props->getFilter())) {
+      atlas = &*it;
+    }
   }
 
-  AtlasInfo& last_atlas = _atlas_infos.back();
-  return new AtlassedTexture(last_atlas.texture, last_atlas.image, texture_props);
+  if (nullptr == atlas) {
+    _atlas_infos.push_back(createAtlas(format, filter));
+    atlas = &_atlas_infos.back();
+  }
+
+  return new AtlassedTexture(atlas->texture, atlas->image, texture_props);
 }
 
 std::unique_ptr<Framebuffer> GL3Renderer::createFramebuffer(const GUID& guid,
@@ -225,13 +238,13 @@ void GL3Renderer::preRender(Session& session, Resources& resources) {
 
       const auto& rejected_images = atlas.image->getRejectedImages();
       if (!rejected_images.empty()) {
-        AtlasInfo atlas = createAtlas();
-        _atlas_infos.push_back(atlas);
+        AtlasInfo new_atlas = createAtlas(atlas.props->getFormat(), atlas.props->getFilter());
+        _atlas_infos.push_back(new_atlas);
 
         for (auto& [_, tex] : _textures) {
           for (const GUID& guid : rejected_images) {
             if (tex->imageGuid() == guid) {
-              static_cast<AtlassedTexture&>(*tex).setAtlas(atlas.texture, atlas.image);
+              static_cast<AtlassedTexture&>(*tex).setAtlas(new_atlas.texture, new_atlas.image);
             }
           }
         }

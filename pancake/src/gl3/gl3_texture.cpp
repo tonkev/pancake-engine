@@ -34,31 +34,36 @@ void GL3Texture::update(const TexturePropsResource& texture_props) {
 
   glBindTexture(GL_TEXTURE_2D, _tex);
 
-  GLenum err = GL_NO_ERROR;
   switch (texture_props.getFormat()) {
     case BufferFormat::RGBA32F:
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, size.x(), size.y(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
                    nullptr);
-      err = glGetError();
-
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       break;
     case BufferFormat::RGBA32UI:
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32UI, size.x(), size.y(), 0, GL_RGBA_INTEGER,
                    GL_UNSIGNED_INT, nullptr);
-      err = glGetError();
-
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       break;
     default:
       FEWI::error() << "Unsupported buffer format!";
       break;
   }
 
+  GLenum err = glGetError();
   if (err != GL_NO_ERROR) {
     FEWI::error() << "Failed to create texture! (" << err << ")";
+  }
+
+  switch (texture_props.getFilter()) {
+    case TextureFilter::Nearest:
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      break;
+    case TextureFilter::Linear:
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      break;
+    default:
+      FEWI::error() << "Unsupported texture filter!";
   }
 
   glBindTexture(GL_TEXTURE_2D, 0);

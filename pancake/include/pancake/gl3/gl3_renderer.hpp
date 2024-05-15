@@ -53,11 +53,14 @@ class GL3Renderer : public Renderer {
 
  private:
   struct AtlasInfo {
+    Ptr<TexturePropsResource> props;
     Ptr<ImageAtlas> image;
     Ptr<GL3Texture> texture;
+
+    AtlasInfo();
   };
 
-  AtlasInfo createAtlas();
+  AtlasInfo createAtlas(BufferFormat format, TextureFilter filter);
 
   unsigned int _instance_vbo;
   std::vector<AtlasInfo> _atlas_infos;

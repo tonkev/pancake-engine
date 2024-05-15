@@ -15,6 +15,12 @@ TexturePropsResource::TexturePropsResource(std::string_view path, const GUID& gu
 
 void TexturePropsResource::_load() {
   JSONResource::_load();
+  if (const JSONValue* val = _json.get("filter"); nullptr != val) {
+    TypeDescLibrary::get<TextureFilter>().visit(ComponentifyJSON(&_filter, *val));
+  }
+  if (const JSONValue* val = _json.get("format"); nullptr != val) {
+    TypeDescLibrary::get<BufferFormat>().visit(ComponentifyJSON(&_format, *val));
+  }
   if (const JSONValue* val = _json.get("size"); nullptr != val) {
     TypeDescLibrary::get<Vec2i>().visit(ComponentifyJSON(&_size, *val));
   }
@@ -25,9 +31,16 @@ void TexturePropsResource::_load() {
 
 void TexturePropsResource::_save() {
   _json.clear();
+  TypeDescLibrary::get<TextureFilter>().visit(JSONifyComponent(_json, "filter", &_filter));
+  TypeDescLibrary::get<BufferFormat>().visit(JSONifyComponent(_json, "format", &_format));
   TypeDescLibrary::get<Vec2i>().visit(JSONifyComponent(_json, "size", &_size));
   TypeDescLibrary::get<GUID>().visit(JSONifyComponent(_json, "guid", &_source_image));
   JSONResource::_save();
+}
+
+void TexturePropsResource::setFilter(TextureFilter filter) {
+  _filter = filter;
+  updated();
 }
 
 void TexturePropsResource::setFormat(BufferFormat format) {
@@ -43,6 +56,10 @@ void TexturePropsResource::setSize(const Vec2i& size) {
 void TexturePropsResource::setSourceImage(const GUID& source_image) {
   _source_image = source_image;
   updated();
+}
+
+TextureFilter TexturePropsResource::getFilter() const {
+  return _filter;
 }
 
 BufferFormat TexturePropsResource::getFormat() const {
