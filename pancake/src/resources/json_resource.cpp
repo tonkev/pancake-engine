@@ -17,7 +17,7 @@ JSONResource::JSONResource(std::string_view path, const GUID& guid)
 void JSONResource::_load() {
   TextResource::_load();
   std::stringstream stream(_text);
-  _json = JSONObject(stream);
+  _json = std::move(JSONObject(stream));
 }
 
 void JSONResource::_save() {

@@ -22,6 +22,8 @@ class JSONValue {
  public:
   enum class Type { Object, Array, String, Number, Bool, Null };
 
+  virtual ~JSONValue() = default;
+
   virtual JSONObject* asObject();
   virtual const JSONObject* asObject() const;
 
@@ -57,6 +59,10 @@ class JSONObject : public JSONValue {
 
   JSONObject() = default;
   JSONObject(std::istream& is, bool* success = nullptr);
+  JSONObject(JSONObject&&) = default;
+  virtual ~JSONObject() override = default;
+
+  JSONObject& operator=(JSONObject&&) = default;
 
   template <JSONValuable T>
   T& getOrCreate(std::string_view key) {
@@ -102,6 +108,7 @@ class JSONArray : public JSONValue {
  public:
   JSONArray() = default;
   JSONArray(std::istream& is, bool* success = nullptr);
+  virtual ~JSONArray() override = default;
 
   template <JSONValuable T>
   T& add() {
@@ -130,6 +137,7 @@ class JSONString : public JSONValue, public std::string {
  public:
   JSONString() = default;
   JSONString(std::istream& is, bool* success = nullptr, const JSONToken& first_token = JSONToken());
+  virtual ~JSONString() override = default;
 
   virtual JSONString* asString() override;
   virtual const JSONString* asString() const override;
@@ -144,6 +152,7 @@ class JSONNumber : public JSONValue {
  public:
   JSONNumber() = default;
   JSONNumber(std::istream& is, bool* success = nullptr);
+  virtual ~JSONNumber() override = default;
 
   void set(int64_t num);
   void set(uint64_t num);
@@ -169,6 +178,7 @@ class JSONBool : public JSONValue {
  public:
   JSONBool() = default;
   JSONBool(std::istream& is, bool* success = nullptr);
+  virtual ~JSONBool() override = default;
 
   void set(bool value);
   bool get() const;
@@ -189,6 +199,7 @@ class JSONNull : public JSONValue {
  public:
   JSONNull() = default;
   JSONNull(std::istream& is, bool* success = nullptr);
+  virtual ~JSONNull() override = default;
 
   virtual const JSONNull* asNull() const override;
 
