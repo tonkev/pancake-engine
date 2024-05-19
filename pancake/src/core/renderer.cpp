@@ -391,14 +391,9 @@ void Renderer::render() {
     cpid[0].model_transform = Mat4f::ones();
 
     for (const auto& [priority, guid] : _blitting_framebuffers) {
-      if (const auto it = _framebuffers.find(guid); it != _framebuffers.end()) {
-        if (const auto tex_opt = it->second->texture(0); tex_opt.has_value()) {
-          ShaderInput("colour", Vec4f::ones()).bind(*default_shader, *this);
-          ShaderInput("tex", TextureRef(tex_opt.value().get().guid(), -1))
-              .bind(*default_shader, *this);
-          drawMeshInstances(*unit_square, cpid);
-        }
-      }
+      ShaderInput("colour", Vec4f::ones()).bind(*default_shader, *this);
+      ShaderInput("tex", TextureRef(guid, -1)).bind(*default_shader, *this);
+      drawMeshInstances(*unit_square, cpid);
     }
   }
 
